@@ -1,4 +1,4 @@
-import os, sys, test, config
+import os, sys, config
 
 def nav_to_trading_data(dataset_name, path):
     try:
