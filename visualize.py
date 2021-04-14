@@ -1,12 +1,22 @@
 import pandas, matplotlib
 import config, util
 
+def read_index(index_file_path):
+    data_frame = pandas.read_csv(index_file_path, usecols=['Date','Close'], index_col='Date')
+    data_frame.index = pandas.to_datetime(data_frame.index, format="%Y%m%d")
+    return data_frame
+
+def generate_index_chart():
+    index_frame = read_index(config.index_file_name)
+    index_frame.plot()
+
+def save_chart(filename):
+    matplotlib.pyplot.savefig('/'.join([config.chart_directory, filename]))
+
 def main():
     util.nav_to_trading_data(config.dataset_name, config.path)
-    data_frame = pandas.read_csv('Indices/Wilshire/$W5000.csv', usecols=['Date','Close'], index_col='Date')
-    data_frame.index = pandas.to_datetime(data_frame.index, format="%Y%m%d")
-    data_frame.plot()
-    matplotlib.pyplot.savefig('/media/rock/DA67-61F9/test_fig.png')
+    generate_index_chart()
+    save_chart('test_fig.png')
 
 if __name__ == "__main__":
     main()
