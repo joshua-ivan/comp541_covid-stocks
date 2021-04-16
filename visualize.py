@@ -1,4 +1,4 @@
-import pandas, matplotlib
+import pandas, matplotlib, os
 import config, util, data_frame_builder
 
 def read_index(index_file_path):
@@ -18,12 +18,15 @@ def generate_index_chart():
     index_frame.plot()
 
 def save_chart(filename):
+    if not os.path.isdir(config.chart_directory):
+        os.mkdir(config.chart_directory)
     matplotlib.pyplot.savefig('/'.join([config.chart_directory, filename]))
 
 def main():
     util.nav_to_trading_data(config.dataset_name, config.path)
     generate_index_chart()
     save_chart('test_fig.png')
+    print('Chart saved to {0}.'.format('/'.join([config.dataset_name, config.path, config.chart_directory])))
 
 if __name__ == "__main__":
     main()

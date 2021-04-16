@@ -1,5 +1,5 @@
 from unittest.mock import patch, ANY, MagicMock
-import matplotlib, unittest
+import matplotlib, unittest, io
 import config, visualize
 
 class TestVisualize(unittest.TestCase):
@@ -25,10 +25,20 @@ class TestVisualize(unittest.TestCase):
         visualize.generate_index_chart()
         mock_read_index.assert_called_with(config.index_file_name)
 
+    @patch('builtins.print')
+    @patch('visualize.os')
     @patch('visualize.matplotlib')
-    def test_save_chart(self, mock_matplotlib):
+    def test_save_chart(self, mock_matplotlib, mock_os, mock_print):
         mock_filename = 'test_file'
+
+        mock_os.path.isdir.return_value = True
         visualize.save_chart(mock_filename)
+        mock_os.path.isdir.assert_called_with(config.chart_directory)
+        mock_matplotlib.pyplot.savefig.assert_called_with('/'.join([config.chart_directory, mock_filename]))
+
+        mock_os.path.isdir.return_value = False
+        visualize.save_chart(mock_filename)
+        mock_os.mkdir.assert_called_with(config.chart_directory)
         mock_matplotlib.pyplot.savefig.assert_called_with('/'.join([config.chart_directory, mock_filename]))
 
 if __name__ == '__main__':
