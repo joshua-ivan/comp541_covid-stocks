@@ -1,17 +1,18 @@
 import pandas, matplotlib, os
-import config, util, data_frame_builder
+import config, util
+from data_frame_builder import DataFrameBuilder
 
 def read_index(index_file_path):
-    data_frame = pandas.read_csv(index_file_path, usecols=['Date','Close'], index_col='Date')
-    data_frame.index = pandas.to_datetime(data_frame.index, format="%Y%m%d")
+    data_frame_builder = DataFrameBuilder(pandas.read_csv(index_file_path, usecols=['Date','Close'], index_col='Date'))
 
-    data_frame = data_frame_builder.fill_missing_dates(data_frame)
-    data_frame = data_frame_builder.convert_to_percent_delta(data_frame, '365D')
-    data_frame = data_frame_builder.filter(data_frame, config.start_date, config.end_date)
-    data_frame = data_frame_builder.rename_column(data_frame, 'Close', 'Wilshire 5000')
-    data_frame = data_frame_builder.rename_axis(data_frame, 'columns', 'Percent Change')
+    data_frame_builder.convert_index_to_datetime('%Y%m%d')
+    data_frame_builder.fill_missing_dates()
+    data_frame_builder.convert_to_percent_delta('365D')
+    data_frame_builder.filter(config.start_date, config.end_date)
+    data_frame_builder.rename_column('Close', 'Wilshire 5000')
+    data_frame_builder.rename_axis('columns', 'Percent Change')
 
-    return data_frame
+    return data_frame_builder.get_data_frame()
 
 def generate_index_chart():
     index_frame = read_index(config.index_file_name)

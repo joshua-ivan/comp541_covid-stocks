@@ -4,7 +4,7 @@ import config, visualize
 
 class TestVisualize(unittest.TestCase):
 
-    @patch('visualize.data_frame_builder')
+    @patch('visualize.DataFrameBuilder')
     @patch('visualize.pandas')
     def test_read_index(self, mock_pandas, mock_df_builder):
         mock_file_path = 'test_path'
@@ -12,13 +12,13 @@ class TestVisualize(unittest.TestCase):
         data_frame = visualize.read_index(mock_file_path)
 
         mock_pandas.read_csv.assert_called_with(mock_file_path, usecols=['Date','Close'], index_col='Date')
-        mock_pandas.to_datetime.assert_called_with(ANY, format="%Y%m%d")
-
-        mock_df_builder.fill_missing_dates.assert_called_with(ANY)
-        mock_df_builder.convert_to_percent_delta.assert_called_with(ANY, '365D')
-        mock_df_builder.filter.assert_called_with(ANY, config.start_date, config.end_date)
-        mock_df_builder.rename_column.assert_called_with(ANY, 'Close', 'Wilshire 5000')
-        mock_df_builder.rename_axis.assert_called_with(ANY, 'columns', 'Percent Change')
+        builder_instance = mock_df_builder.return_value
+        builder_instance.convert_index_to_datetime.assert_called_with("%Y%m%d")
+        builder_instance.fill_missing_dates.assert_called()
+        builder_instance.convert_to_percent_delta.assert_called_with('365D')
+        builder_instance.filter.assert_called_with(config.start_date, config.end_date)
+        builder_instance.rename_column.assert_called_with('Close', 'Wilshire 5000')
+        builder_instance.rename_axis.assert_called_with('columns', 'Percent Change')
 
     @patch('visualize.read_index')
     def test_generate_index_chart(self, mock_read_index):
