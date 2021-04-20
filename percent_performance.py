@@ -16,7 +16,8 @@ def build_percent_performance_data_frame(asset_name, asset_file):
 
 def main():
     util.nav_to_trading_data(config.dataset_name, config.path)
-    wilshire_5000_data_frame = build_percent_performance_data_frame('Wilshire 5000', config.index_file_name)
+    wilshire_5000_data_frame = build_percent_performance_data_frame('Wilshire 5000', config.wilshire_5000_file_name)
+    nasdaq_comp_data_frame = build_percent_performance_data_frame('NASDAQ Composite Index', config.nasdaq_comp_file_name)
 
 if __name__ == "__main__":
     main()
