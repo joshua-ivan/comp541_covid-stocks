@@ -1,4 +1,4 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, call, MagicMock
 import unittest
 import percent_performance, config
 
@@ -20,6 +20,40 @@ class TestPercentPerformance(unittest.TestCase):
         builder_instance.filter.assert_called_with(config.start_date, config.end_date)
         builder_instance.rename_column.assert_called_with('Close', mock_asset_name)
         builder_instance.rename_axis.assert_called_with('columns', 'Percent Change')
+
+    @patch('percent_performance.matplotlib')
+    @patch('percent_performance.os')
+    def test_generate_chart(self, mock_os, mock_matplotlib):
+        mock_frame = MagicMock()
+        mock_filename = 'mock_chart'
+        mock_directory = '/'.join([config.chart_directory, 'mock_exchange'])
+
+        mock_os.path.isdir.side_effect = [True, True]
+        percent_performance.generate_chart('mock_exchange', mock_filename, mock_frame)
+        mock_frame.plot.assert_called()
+        mock_os.path.isdir.assert_has_calls([call(config.chart_directory), call(mock_directory)])
+        mock_matplotlib.pyplot.savefig.assert_called_with('/'.join([mock_directory, mock_filename]))
+
+        mock_os.path.isdir.side_effect = [False, False]
+        percent_performance.generate_chart('mock_exchange', 'mock_chart', mock_frame)
+        mock_frame.plot.assert_called()
+        mock_os.mkdir.assert_has_calls([call(config.chart_directory), call(mock_directory)])
+        mock_matplotlib.pyplot.savefig.assert_called_with('/'.join([mock_directory, mock_filename]))
+
+    @patch('percent_performance.generate_chart')
+    @patch('percent_performance.build_percent_performance_data_frame')
+    def test_process_asset(self, mock_build_df, mock_gen_chart):
+        mock_exchange = 'MOCK'
+        mock_asset_name = 'TEST'
+
+        mock_asset_df = MagicMock()
+        mock_build_df.return_value = mock_asset_df
+        mock_index_df = MagicMock()
+
+        percent_performance.process_asset('TEST.csv', mock_exchange, mock_exchange, mock_index_df)
+
+        mock_build_df.assert_called_with(mock_asset_name, 'MOCK/TEST.csv')
+        mock_gen_chart.assert_called_with(mock_exchange, mock_asset_name, mock_build_df.return_value)
 
 if __name__ == '__main__':
     unittest.main()
