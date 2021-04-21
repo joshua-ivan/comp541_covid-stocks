@@ -26,11 +26,18 @@ def generate_chart(exchange, chart_name, chart_frame):
 
     matplotlib.pyplot.savefig('/'.join([full_directory, chart_name]))
 
+def get_summary(asset_name, asset_data_frame):
+    return [asset_name, asset_data_frame[asset_name][config.end_date], asset_data_frame.std()[asset_name]]
+
+def write_summary_csv(rows):
+    pandas.DataFrame(rows, columns=config.summary_file_columns).to_csv(config.summary_file_name)
+
 def process_asset(asset, exchange, index_name, index_data_frame):
     asset_name = asset.split('.')[0]
     asset_data_frame = build_percent_performance_data_frame(asset_name, '/'.join([exchange, asset]))
     asset_data_frame[asset_name] = asset_data_frame[asset_name] - index_data_frame[index_name]
     generate_chart(exchange, asset_name, asset_data_frame)
+    return get_summary(asset_name, asset_data_frame)
 
 def main():
     util.nav_to_trading_data(config.dataset_name, config.path)
@@ -40,7 +47,9 @@ def main():
     nasdaq_comp_data_frame = build_percent_performance_data_frame(\
         config.nasdaq_comp_asset_name, config.nasdaq_comp_file_name)
 
-    process_asset('GME.csv', 'NYSE', config.wilshire_5000_asset_name, wilshire_5000_data_frame)
+    summary_rows = []
+    summary_rows.append(process_asset('GME.csv', 'NYSE', config.wilshire_5000_asset_name, wilshire_5000_data_frame))
+    write_summary_csv(summary_rows)
 
     # for exchange in config.exchanges:
     #     asset_list = os.listdir(exchange)

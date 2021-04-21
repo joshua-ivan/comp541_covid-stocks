@@ -55,5 +55,21 @@ class TestPercentPerformance(unittest.TestCase):
         mock_build_df.assert_called_with(mock_asset_name, 'MOCK/TEST.csv')
         mock_gen_chart.assert_called_with(mock_exchange, mock_asset_name, mock_build_df.return_value)
 
+    def test_get_summary(self):
+        mock_asset_name = 'TEST'
+        mock_data_frame = MagicMock()
+        mock_data_frame[mock_asset_name][config.end_date] = .5
+        mock_data_frame.stdev.return_value = {mock_asset_name: .1}
+
+        summary = percent_performance.get_summary(mock_asset_name, mock_data_frame)
+        self.assertEqual(summary,\
+            [mock_asset_name, mock_data_frame[mock_asset_name][config.end_date], mock_data_frame.std()[mock_asset_name]])
+
+    @patch('percent_performance.pandas')
+    def test_write_summary_csv(self, mock_pandas):
+        percent_performance.write_summary_csv([])
+        mock_pandas.DataFrame.assert_called_with([], columns=config.summary_file_columns)
+        mock_pandas.DataFrame.return_value.to_csv.assert_called_with(config.summary_file_name)
+
 if __name__ == '__main__':
     unittest.main()
