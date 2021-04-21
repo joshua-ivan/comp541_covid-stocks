@@ -32,8 +32,11 @@ def get_summary(asset_name, asset_data_frame):
     return [asset_name, asset_data_frame[asset_name][config.end_date], asset_data_frame.std()[asset_name]]
 
 def write_summary_csv(rows, args):
+    if not os.path.isdir(config.summary_file_directory):
+        os.mkdir(config.summary_file_directory)
+
     pandas.DataFrame(rows, columns=config.summary_file_columns)\
-        .to_csv(config.summary_file_name.format(args[0], args[1]))
+        .to_csv('/'.join([config.summary_file_directory, config.summary_file_name.format(args[0], args[1])]))
 
 def process_asset(asset, exchange, index_name, index_data_frame):
     asset_name = asset.split('.')[0]

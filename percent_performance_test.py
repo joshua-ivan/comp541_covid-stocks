@@ -66,15 +66,26 @@ class TestPercentPerformance(unittest.TestCase):
         self.assertEqual(summary,\
             [mock_asset_name, mock_data_frame[mock_asset_name][config.end_date], mock_data_frame.std()[mock_asset_name]])
 
-    @patch('percent_performance.pandas')
-    def test_write_summary_csv(self, mock_pandas):
-        mock_args = ['MOCK', 'A']
-        percent_performance.write_summary_csv([], mock_args)
+    def _assert_csv_written(self, mock_pandas, mock_args):
         mock_pandas.DataFrame.assert_called_with([], columns=config.summary_file_columns)
         mock_pandas.DataFrame.return_value.to_csv.assert_called_with(\
-            config.summary_file_name.format(mock_args[0], mock_args[1]))
+            '/'.join([config.summary_file_directory, config.summary_file_name.format(mock_args[0], mock_args[1])]))
 
-    def _assert_called_with(self, mock_sys, usage_string):
+    @patch('percent_performance.pandas')
+    @patch('percent_performance.os')
+    def test_write_summary_csv(self, mock_os, mock_pandas):
+        mock_args = ['MOCK', 'A']
+        mock_os.path.isdir.return_value = True
+        percent_performance.write_summary_csv([], mock_args)
+        mock_os.path.isdir.assert_called()
+        self._assert_csv_written(mock_pandas, mock_args)
+
+        mock_os.path.isdir.return_value = False
+        percent_performance.write_summary_csv([], mock_args)
+        mock_os.mkdir.assert_called_with(config.summary_file_directory)
+        self._assert_csv_written(mock_pandas, mock_args)
+
+    def _assert_exit_called(self, mock_sys, usage_string):
         percent_performance.parse_command_line_args()
         mock_sys.exit.assert_called_with(usage_string)
 
@@ -90,15 +101,15 @@ class TestPercentPerformance(unittest.TestCase):
 
         mock_sys.argv = ['test']
         usage_string = 'Usage: python3 {0} <exchange> <prefix>'.format(mock_sys.argv[0])
-        self._assert_called_with(mock_sys, usage_string)
+        self._assert_exit_called(mock_sys, usage_string)
 
         mock_sys.argv = ['test', 'MOCK']
         mock_config.exchanges = ['']
-        self._assert_called_with(mock_sys, usage_string)
+        self._assert_exit_called(mock_sys, usage_string)
 
         mock_sys.argv = ['test', 'MOCK', '1']
         mock_config.exchanges = ['MOCK']
-        self._assert_called_with(mock_sys, usage_string)
+        self._assert_exit_called(mock_sys, usage_string)
 
 if __name__ == '__main__':
     unittest.main()
