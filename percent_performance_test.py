@@ -39,6 +39,7 @@ class TestPercentPerformance(unittest.TestCase):
         mock_frame.plot.assert_called()
         mock_os.mkdir.assert_has_calls([call(config.chart_directory), call(mock_directory)])
         mock_matplotlib.pyplot.savefig.assert_called_with('/'.join([mock_directory, mock_filename]))
+        mock_matplotlib.pyplot.close.assert_called()
 
     @patch('percent_performance.generate_chart')
     @patch('percent_performance.build_percent_performance_data_frame')

@@ -26,6 +26,8 @@ def generate_chart(exchange, chart_name, chart_frame):
 
     matplotlib.pyplot.savefig('/'.join([full_directory, chart_name]))
 
+    matplotlib.pyplot.close()
+
 def get_summary(asset_name, asset_data_frame):
     return [asset_name, asset_data_frame[asset_name][config.end_date], asset_data_frame.std()[asset_name]]
 
@@ -48,13 +50,18 @@ def main():
         config.nasdaq_comp_asset_name, config.nasdaq_comp_file_name)
 
     summary_rows = []
-    summary_rows.append(process_asset('GME.csv', 'NYSE', config.wilshire_5000_asset_name, wilshire_5000_data_frame))
-    write_summary_csv(summary_rows)
+    for exchange in config.exchanges:
+        asset_list = os.listdir(exchange)
+        for asset in asset_list:
+            summary_rows.append(\
+                process_asset(asset, exchange, config.wilshire_5000_asset_name, wilshire_5000_data_frame))
 
-    # for exchange in config.exchanges:
-    #     asset_list = os.listdir(exchange)
-    #     for asset in asset_list:
-    #         process_asset(asset, exchange, wilshire_5000_data_frame)
+    asset_list = os.listdir('NASDAQ')
+    for asset in asset_list:
+        summary_rows.append(\
+            process_asset(asset, exchange, config.nasdaq_comp_asset_name, nasdaq_comp_data_frame))
+
+    write_summary_csv(summary_rows)
 
 if __name__ == "__main__":
     main()
