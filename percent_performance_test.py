@@ -68,9 +68,37 @@ class TestPercentPerformance(unittest.TestCase):
 
     @patch('percent_performance.pandas')
     def test_write_summary_csv(self, mock_pandas):
-        percent_performance.write_summary_csv([])
+        mock_args = ['MOCK', 'A']
+        percent_performance.write_summary_csv([], mock_args)
         mock_pandas.DataFrame.assert_called_with([], columns=config.summary_file_columns)
-        mock_pandas.DataFrame.return_value.to_csv.assert_called_with(config.summary_file_name)
+        mock_pandas.DataFrame.return_value.to_csv.assert_called_with(\
+            config.summary_file_name.format(mock_args[0], mock_args[1]))
+
+    def _assert_called_with(self, mock_sys, usage_string):
+        percent_performance.parse_command_line_args()
+        mock_sys.exit.assert_called_with(usage_string)
+
+    @patch('percent_performance.sys')
+    @patch('percent_performance.config')
+    @patch('builtins.print')
+    def test_parse_command_line_args(self, mock_print, mock_config, mock_sys):
+        mock_args = ['test', 'MOCK', 'A']
+        mock_config.exchanges = ['MOCK']
+        mock_sys.argv = mock_args
+        args = percent_performance.parse_command_line_args()
+        self.assertEqual(mock_args[1:], args)
+
+        mock_sys.argv = ['test']
+        usage_string = 'Usage: python3 {0} <exchange> <prefix>'.format(mock_sys.argv[0])
+        self._assert_called_with(mock_sys, usage_string)
+
+        mock_sys.argv = ['test', 'MOCK']
+        mock_config.exchanges = ['']
+        self._assert_called_with(mock_sys, usage_string)
+
+        mock_sys.argv = ['test', 'MOCK', '1']
+        mock_config.exchanges = ['MOCK']
+        self._assert_called_with(mock_sys, usage_string)
 
 if __name__ == '__main__':
     unittest.main()
