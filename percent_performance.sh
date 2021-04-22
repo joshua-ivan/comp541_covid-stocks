@@ -7,4 +7,4 @@ for exchange in "${exchanges[@]}" ; do
         done
     done
 done
-
+python3 aggregate_csvs.py
