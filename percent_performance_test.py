@@ -3,7 +3,6 @@ import unittest
 import percent_performance, config
 
 class TestPercentPerformance(unittest.TestCase):
-
     @patch('percent_performance.DataFrameBuilder')
     @patch('percent_performance.pandas')
     def test_build_percent_performance_data_frame(self, mock_pandas, mock_df_builder):
