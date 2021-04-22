@@ -1,6 +1,6 @@
 dataset_name = 'TradingData'
 path = 'Stocks/US'
-exchanges = ['AMEX', 'NYSE', 'NYSE Arca', 'OTC']
+exchanges = ['AMEX', 'NASDAQ', 'NYSE', 'NYSE Arca', 'OTC']
 chart_directory = 'charts'
 summary_file_directory = 'csvs'
 summary_file_name = 'end-of-year-summary_{0}-{1}.csv'
