@@ -19,8 +19,8 @@ class DataFrameBuilder:
     def fill_missing_dates(self):
         self.data_frame = self.data_frame.resample('1D').ffill()
 
-    def convert_to_percent_delta(self, f):
-        self.data_frame = self.data_frame.pct_change(freq=f)
+    def convert_to_percent_delta(self, column, f):
+        self.data_frame[column] = self.data_frame[column].pct_change(freq=f)
 
     def get_data_frame(self):
         return self.data_frame

@@ -11,11 +11,11 @@ class TestPercentPerformance(unittest.TestCase):
 
         data_frame = percent_performance.build_percent_performance_data_frame(mock_asset_name, mock_asset_file)
 
-        mock_pandas.read_csv.assert_called_with(mock_asset_file, usecols=['Date','Close'], index_col='Date')
+        mock_pandas.read_csv.assert_called_with(mock_asset_file, usecols=['Date','Close','Volume'], index_col='Date')
         builder_instance = mock_df_builder.return_value
         builder_instance.convert_index_to_datetime.assert_called_with("%Y%m%d")
         builder_instance.fill_missing_dates.assert_called()
-        builder_instance.convert_to_percent_delta.assert_called_with('365D')
+        builder_instance.convert_to_percent_delta.assert_called_with('Close', '365D')
         builder_instance.filter.assert_called_with(config.start_date, config.end_date)
         builder_instance.rename_column.assert_called_with('Close', mock_asset_name)
         builder_instance.rename_axis.assert_called_with('columns', 'Percent Change')
@@ -29,13 +29,15 @@ class TestPercentPerformance(unittest.TestCase):
 
         mock_os.path.isdir.side_effect = [True, True]
         percent_performance.generate_chart('mock_exchange', mock_filename, mock_frame)
-        mock_frame.plot.assert_called()
+        mock_frame.plot.assert_called_with(xlabel='Date', ylabel='Performance %', secondary_y=['Volume'])
+        mock_frame.plot.return_value.right_ax.set_ylabel.assert_called_with('Trade Volume')
         mock_os.path.isdir.assert_has_calls([call(config.chart_directory), call(mock_directory)])
         mock_matplotlib.pyplot.savefig.assert_called_with('/'.join([mock_directory, mock_filename]))
 
         mock_os.path.isdir.side_effect = [False, False]
         percent_performance.generate_chart('mock_exchange', 'mock_chart', mock_frame)
-        mock_frame.plot.assert_called()
+        mock_frame.plot.assert_called_with(xlabel='Date', ylabel='Performance %', secondary_y=['Volume'])
+        mock_frame.plot.return_value.right_ax.set_ylabel.assert_called_with('Trade Volume')
         mock_os.mkdir.assert_has_calls([call(config.chart_directory), call(mock_directory)])
         mock_matplotlib.pyplot.savefig.assert_called_with('/'.join([mock_directory, mock_filename]))
         mock_matplotlib.pyplot.close.assert_called()
@@ -63,7 +65,11 @@ class TestPercentPerformance(unittest.TestCase):
 
         summary = percent_performance.get_summary(mock_asset_name, mock_data_frame)
         self.assertEqual(summary,\
-            [mock_asset_name, mock_data_frame[mock_asset_name][config.end_date], mock_data_frame.std()[mock_asset_name]])
+            [mock_asset_name,\
+            mock_data_frame[mock_asset_name][config.end_date],\
+            mock_data_frame[mock_asset_name].std(),\
+            mock_data_frame['Volume'].mean(),\
+            mock_data_frame['Volume'].std()])
 
     def _assert_csv_written(self, mock_pandas, mock_args):
         mock_pandas.DataFrame.assert_called_with([], columns=config.summary_file_columns)

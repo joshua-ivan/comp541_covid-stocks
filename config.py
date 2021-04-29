@@ -1,10 +1,11 @@
 dataset_name = 'TradingData'
 path = 'Stocks/US'
-exchanges = ['AMEX', 'NASDAQ', 'NYSE', 'NYSE Arca', 'OTC']
+exchanges = ['AMEX', 'NASDAQ', 'NYSE', 'NYSE Arca']
 chart_directory = 'charts'
 summary_file_directory = 'csvs'
 summary_file_name = 'end-of-year-summary_{0}-{1}.csv'
-summary_file_columns = ['Asset', 'Annual Percentage Change', 'Standard Deviation']
+summary_file_columns =\
+    ['Asset', 'Annual Percentage Change', '% Standard Deviation', 'Average Volume', 'Vol Standard Deviation']
 index_file_name = 'Indices/Wilshire/$W5000.csv'
 wilshire_5000_asset_name = 'Wilshire 5000'
 wilshire_5000_file_name = 'Indices/Wilshire/$W5000.csv'

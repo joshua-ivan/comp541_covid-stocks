@@ -3,11 +3,12 @@ import pandas, matplotlib, os, sys
 import config, util
 
 def build_percent_performance_data_frame(asset_name, asset_file):
-    data_frame_builder = DataFrameBuilder(pandas.read_csv(asset_file, usecols=['Date','Close'], index_col='Date'))
+    data_frame_builder = DataFrameBuilder(pandas.read_csv(asset_file,\
+        usecols=['Date','Close','Volume'], index_col='Date'))
 
     data_frame_builder.convert_index_to_datetime('%Y%m%d')
     data_frame_builder.fill_missing_dates()
-    data_frame_builder.convert_to_percent_delta('365D')
+    data_frame_builder.convert_to_percent_delta('Close', '365D')
     data_frame_builder.filter(config.start_date, config.end_date)
     data_frame_builder.rename_column('Close', asset_name)
     data_frame_builder.rename_axis('columns', 'Percent Change')
@@ -15,7 +16,8 @@ def build_percent_performance_data_frame(asset_name, asset_file):
     return data_frame_builder.get_data_frame()
 
 def generate_chart(exchange, chart_name, chart_frame):
-    chart_frame.plot()
+    chart_frame.plot(xlabel='Date', ylabel='Performance %', secondary_y=['Volume'])\
+        .right_ax.set_ylabel('Trade Volume')
 
     if not os.path.isdir(config.chart_directory):
         os.mkdir(config.chart_directory)
@@ -29,7 +31,12 @@ def generate_chart(exchange, chart_name, chart_frame):
     matplotlib.pyplot.close()
 
 def get_summary(asset_name, asset_data_frame):
-    return [asset_name, asset_data_frame[asset_name][config.end_date], asset_data_frame.std()[asset_name]]
+    return [\
+        asset_name,\
+        asset_data_frame[asset_name][config.end_date],\
+        asset_data_frame[asset_name].std(),\
+        asset_data_frame['Volume'].mean(),\
+        asset_data_frame['Volume'].std()]
 
 def write_summary_csv(rows, args):
     if not os.path.isdir(config.summary_file_directory):

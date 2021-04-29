@@ -1,5 +1,5 @@
 #!/bin/bash
-declare -a exchanges=("AMEX" "NASDAQ" "NYSE" "NYSE Arca" "OTC")
+declare -a exchanges=("AMEX" "NASDAQ" "NYSE" "NYSE Arca")
 for exchange in "${exchanges[@]}" ; do
     for letter_one in {a..z} ; do
         for letter_two in {a..z} ; do

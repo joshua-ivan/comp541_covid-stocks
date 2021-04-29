@@ -5,7 +5,7 @@ import aggregate_csvs, config
 class TestAggregateCsvs(unittest.TestCase):
     @patch('aggregate_csvs.pandas')
     def test_read_csv(self, mock_pandas):
-        expected_list = [(1, 2, 3, 4), (5, 6, 7, 8)]
+        expected_list = [(1, 2, 3, 4, 5), (6, 7, 8, 9, 10)]
         mock_pandas.read_csv.return_value = MagicMock()
         mock_pandas.read_csv.return_value.to_records.return_value = expected_list
         mock_csv = 'test.csv'
