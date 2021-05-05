@@ -76,11 +76,6 @@ def parse_command_line_args():
 def main():
     util.nav_to_trading_data(config.dataset_name, config.path)
 
-    wilshire_5000_data_frame = build_percent_performance_data_frame(\
-        config.wilshire_5000_asset_name, config.wilshire_5000_file_name)
-    nasdaq_comp_data_frame = build_percent_performance_data_frame(\
-        config.nasdaq_comp_asset_name, config.nasdaq_comp_file_name)
-
     args = parse_command_line_args()
     asset_list = [x for x in os.listdir(args[0]) if x.startswith(args[1])]
 
