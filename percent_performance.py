@@ -1,4 +1,5 @@
 from data_frame_builder import DataFrameBuilder
+from insufficient_data_exception import InsufficientDataException
 import pandas, matplotlib, os, sys
 import config, util
 
@@ -7,13 +8,19 @@ def build_percent_performance_data_frame(asset_name, asset_file):
         usecols=['Date','Close','Volume'], index_col='Date'))
 
     data_frame_builder.convert_index_to_datetime('%Y%m%d')
-    data_frame_builder.fill_missing_dates()
-    data_frame_builder.convert_to_percent_delta('Close', '365D')
-    data_frame_builder.filter(config.start_date, config.end_date)
-    data_frame_builder.rename_column('Close', asset_name)
-    data_frame_builder.rename_axis('columns', 'Percent Change')
+    data_frame_index = data_frame_builder.get_data_frame_index()
 
-    return data_frame_builder.get_data_frame()
+    if config.raw_start_date in data_frame_index and config.end_date in data_frame_index:
+        data_frame_builder.fill_missing_dates()
+        data_frame_builder.convert_to_percent_delta('Close', '365D')
+        data_frame_builder.filter(config.start_date, config.end_date)
+        data_frame_builder.rename_column('Close', asset_name)
+        data_frame_builder.rename_axis('columns', 'Percent Change')
+
+        return data_frame_builder.get_data_frame()
+    else:
+        raise InsufficientDataException(asset_name)
+        return
 
 def generate_chart(exchange, chart_name, chart_frame):
     chart_frame.plot(xlabel='Date', ylabel='Performance %', secondary_y=['Volume'])\
@@ -47,10 +54,15 @@ def write_summary_csv(rows, args):
 
 def process_asset(asset, exchange, index_name, index_data_frame):
     asset_name = asset.split('.')[0]
-    asset_data_frame = build_percent_performance_data_frame(asset_name, '/'.join([exchange, asset]))
-    asset_data_frame[asset_name] = asset_data_frame[asset_name] - index_data_frame[index_name]
-    generate_chart(exchange, asset_name, asset_data_frame)
-    return get_summary(asset_name, asset_data_frame)
+    try:
+        asset_data_frame = build_percent_performance_data_frame(asset_name, '/'.join([exchange, asset]))
+    except InsufficientDataException as exception:
+        print(exception.message)
+        return
+    else:
+        asset_data_frame[asset_name] = asset_data_frame[asset_name] - index_data_frame[index_name]
+        generate_chart(exchange, asset_name, asset_data_frame)
+        return get_summary(asset_name, asset_data_frame)
 
 def parse_command_line_args():
     usage_string = 'Usage: python3 {0} <exchange> <prefix>'.format(sys.argv[0])
@@ -92,8 +104,9 @@ def main():
 
     summary_rows = []
     for asset in asset_list:
-        summary_rows.append(\
-            process_asset(asset, args[0], index_name, index_data_frame))
+        row = process_asset(asset, args[0], index_name, index_data_frame)
+        if row:
+            summary_rows.append(row)
 
     write_summary_csv(summary_rows, args)
 

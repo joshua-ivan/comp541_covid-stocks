@@ -1,4 +1,5 @@
 from unittest.mock import patch, call, MagicMock
+from insufficient_data_exception import InsufficientDataException
 import unittest
 import percent_performance, config
 
@@ -8,6 +9,7 @@ class TestPercentPerformance(unittest.TestCase):
     def test_build_percent_performance_data_frame(self, mock_pandas, mock_df_builder):
         mock_asset_name = 'test_asset'
         mock_asset_file = 'test_path'
+        mock_df_builder.return_value.get_data_frame_index.return_value = ['2019-02-01', '2021-02-01']
 
         data_frame = percent_performance.build_percent_performance_data_frame(mock_asset_name, mock_asset_file)
 
@@ -19,6 +21,14 @@ class TestPercentPerformance(unittest.TestCase):
         builder_instance.filter.assert_called_with(config.start_date, config.end_date)
         builder_instance.rename_column.assert_called_with('Close', mock_asset_name)
         builder_instance.rename_axis.assert_called_with('columns', 'Percent Change')
+
+        mock_df_builder.return_value.get_data_frame_index.return_value = []
+        try:
+            data_frame = percent_performance.build_percent_performance_data_frame(mock_asset_name, mock_asset_file)
+        except InsufficientDataException:
+            pass
+        else:
+            self.fail('InsufficientDataException not thrown')
 
     @patch('percent_performance.matplotlib')
     @patch('percent_performance.os')
@@ -42,9 +52,11 @@ class TestPercentPerformance(unittest.TestCase):
         mock_matplotlib.pyplot.savefig.assert_called_with('/'.join([mock_directory, mock_filename]))
         mock_matplotlib.pyplot.close.assert_called()
 
+    @patch('builtins.print')
+    @patch('percent_performance.get_summary')
     @patch('percent_performance.generate_chart')
     @patch('percent_performance.build_percent_performance_data_frame')
-    def test_process_asset(self, mock_build_df, mock_gen_chart):
+    def test_process_asset(self, mock_build_df, mock_gen_chart, mock_get_summary, mock_print):
         mock_exchange = 'MOCK'
         mock_asset_name = 'TEST'
 
@@ -56,6 +68,13 @@ class TestPercentPerformance(unittest.TestCase):
 
         mock_build_df.assert_called_with(mock_asset_name, 'MOCK/TEST.csv')
         mock_gen_chart.assert_called_with(mock_exchange, mock_asset_name, mock_build_df.return_value)
+        mock_get_summary.assert_called_with(mock_asset_name, mock_asset_df)
+
+        exception = InsufficientDataException('Test')
+        mock_build_df.side_effect = exception
+        percent_performance.process_asset('TEST.csv', mock_exchange, mock_exchange, mock_index_df)
+        mock_get_summary.assert_called_once_with(mock_asset_name, mock_asset_df)
+        mock_print.assert_called_with(exception.message)
 
     def test_get_summary(self):
         mock_asset_name = 'TEST'

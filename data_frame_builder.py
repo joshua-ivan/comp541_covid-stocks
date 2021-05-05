@@ -25,3 +25,5 @@ class DataFrameBuilder:
     def get_data_frame(self):
         return self.data_frame
 
+    def get_data_frame_index(self):
+        return self.data_frame.index
